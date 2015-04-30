@@ -22,12 +22,7 @@
 
 #define SWITCHER(SWITCH,CAUSE) if (SWITCH) CAUSE;
 
-
-
-///**
-// * Ideally, this should be guaranteed by resource manager.
-// */
-//#define MAX_DEGREE_OF_PARALLELISM 6
+#define PRINT_PERFORMANCE
 
 
 ExpanderTracker* ExpanderTracker::instance_=0;
@@ -35,12 +30,21 @@ ExpanderTracker::ExpanderTracker(){
 	// TODO Auto-generated constructor stub
 	log_=new ExpanderTrackerLogging();
 
-	pthread_create(&monitor_thread_id_,0,monitoringThread,this);
-	log_->log("************Monitoring thread id=%lx\n",monitor_thread_id_);
+	pthread_create(&scheduling_thread_id_,0,SchedulingThread,this);
+	log_->log("************Monitoring thread id=%lx\n",scheduling_thread_id_);
+
+	monitoring_thread_id_=-1;
+#ifdef PRINT_PERFORMANCE
+	pthread_create(&monitoring_thread_id_,0,MonitoringThread,this);
+#endif
+
 }
 
 ExpanderTracker::~ExpanderTracker() {
-	pthread_cancel(monitor_thread_id_);
+	pthread_cancel(scheduling_thread_id_);
+#ifdef PRINT_PERFORMANCE
+	pthread_cancel(monitoring_thread_id_);
+#endif
 	instance_=0;
 	delete log_;
 }
@@ -182,7 +186,7 @@ ExpanderID ExpanderTracker::registerNewExpander(MonitorableBuffer* buffer,Expand
 	ExpanderID expander_id;
 	lock_.acquire();
 	expander_id=IDsGenerator::getInstance()->getUniqueExpanderID();
-	expander_id_to_status_[expander_id]=new ExpanderStatus(expand_shrink);
+	expander_id_to_status_[expander_id]=new ExpanderStatus(expand_shrink,expander_id);
 	expander_id_to_status_[expander_id]->addNewEndpoint(LocalStageEndPoint(stage_desc,"Expander",buffer));
 	expander_id_to_expand_shrink_[expander_id]=expand_shrink;
 	assert(expand_shrink!=0);
@@ -456,7 +460,7 @@ int ExpanderTracker::decideExpandingOrShrinking(local_stage& current_stage,unsig
 
 
 }
-void* ExpanderTracker::monitoringThread(void* arg){
+void* ExpanderTracker::SchedulingThread(void* arg){
 	if(!Config::enable_expander_adaptivity){
 		return 0;
 	}
@@ -549,6 +553,20 @@ int ExpanderTracker::shrinkIfNotExceedTheMinDegreeOfParallelims(
 	return DECISION_KEEP;
 }
 
+void* ExpanderTracker::MonitoringThread(void* arg) {
+
+	ExpanderTracker* pthis=(ExpanderTracker*)arg;
+
+	long print_cycles_in_us=10000; //10 ms
+	while(true){
+
+		for(boost::unordered_map<ExpanderID,ExpanderStatus*>::const_iterator it= pthis->expander_id_to_status_.begin();it!=pthis->expander_id_to_status_.cend();it++){
+			it->second->printPerformanceInfo();
+		}
+		usleep(print_cycles_in_us);
+	}
+}
+
 void ExpanderTracker::printStatus() {
 	printf("Num. of Expanders: %d\n",expander_id_to_status_.size());
 	printf("expanded_thread_id : ExpanderID\n");
@@ -581,4 +599,9 @@ bool ExpanderTracker::trackExpander(ExpanderID id) const {
 	if(expander_id_to_status_.find(id)!=expander_id_to_status_.end())
 		return true;
 	return false;
+}
+
+void ExpanderTracker::ExpanderStatus::printPerformanceInfo() const {
+	printf("%ld:\t",id_);
+	perf_info.print();
 }

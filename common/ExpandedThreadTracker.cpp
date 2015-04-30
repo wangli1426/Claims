@@ -79,15 +79,7 @@ void PerformanceInfo::processed_one_block(){
 		last_update_=cur_tick;
 		scalability_vector_[cur_dop].last_update=cur_tick;
 		scalability_vector_[cur_dop].performance=report_instance_performance_in_millibytes();
-		int max_dop=Config::getInstance()->max_degree_of_parallelism+1;
-		for(unsigned i=0;i<max_dop;i++){
-			if(scalability_vector_[i].isUpdateToDate())
-				printf("%4.0f\t",scalability_vector_[i].performance);
-			else{
-				printf("N/A\t");
-			}
-		}
-		printf("\n");
+//		print();
 	}
 
 }
@@ -176,6 +168,18 @@ unsigned long PerformanceInfo::getBlockSumInAllSlices() {
 	return ret;
 }
 
-bool PerformanceInfo::entry::isUpdateToDate() {
+bool PerformanceInfo::entry::isUpdateToDate()const {
 	return last_update>=curtick()-VALID_FRECY;
+}
+
+void PerformanceInfo::print() const {
+	int max_dop=Config::getInstance()->max_degree_of_parallelism+1;
+	for(unsigned i=0;i<max_dop;i++){
+		if(scalability_vector_[i].isUpdateToDate())
+			printf("%4.0f\t",scalability_vector_[i].performance);
+		else{
+			printf("N/A\t");
+		}
+	}
+	printf("\n");
 }

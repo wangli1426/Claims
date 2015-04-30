@@ -25,7 +25,7 @@ struct PerformanceInfo{
 		entry():performance(0),last_update(0){};
 		float performance;
 		timestamp last_update;
-		bool isUpdateToDate();
+		bool isUpdateToDate() const;
 	};
 //	PerformanceInfo();
 	PerformanceInfo(ExpandabilityShrinkability* expand_shrink);
@@ -42,6 +42,9 @@ struct PerformanceInfo{
 	void updateTimeSlicesToCurrentTicks();
 
 	unsigned long getBlockSumInAllSlices();
+
+	void print() const;
+
 	SpineLock lock_;
 	unsigned *slices;
 	unsigned long long int init_ticks_;
@@ -49,7 +52,6 @@ struct PerformanceInfo{
 	ExpandabilityShrinkability* expand_shrink_;
 	/* the timestamp for the last update to the scalability vector */
 	timestamp last_update_;
-
 };
 
 

@@ -130,7 +130,7 @@ class ExpanderTracker {
 	 * This structure maintains the status of current expander in terms of running stage.
 	 */
 	struct ExpanderStatus{
-		ExpanderStatus(ExpandabilityShrinkability* expand_shrink):perf_info(expand_shrink){
+		ExpanderStatus(ExpandabilityShrinkability* expand_shrink,ExpanderID id):perf_info(expand_shrink),id_(id){
 
 		}
 //		ExpanderStatus(){};
@@ -139,7 +139,9 @@ class ExpanderTracker {
 		local_stage current_stage;
 		std::stack<LocalStageEndPoint> pending_endpoints;
 		void addNewEndpoint(LocalStageEndPoint);
+		void printPerformanceInfo()const;
 		Lock lock;
+		ExpanderID id_;
 	};
 
 public:
@@ -189,7 +191,8 @@ public:
 
 private:
 	ExpanderTracker();
-	static void* monitoringThread(void* arg);
+	static void* SchedulingThread(void* arg);
+	static void* MonitoringThread(void* arg);
 
 	/*
 	 * The access of current_stage might cause bug if thread-safe is not concerned.
@@ -220,7 +223,8 @@ public://for debug, this should be private!
 
 	Logging* log_;
 
-	pthread_t monitor_thread_id_;
+	pthread_t scheduling_thread_id_;
+	pthread_t monitoring_thread_id_;
 
 };
 
