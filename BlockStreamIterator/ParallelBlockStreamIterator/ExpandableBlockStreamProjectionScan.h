@@ -85,6 +85,7 @@ public:
 	bool close();
 	void print();
 private:
+	thread_context* createContext();
 
 	bool passSample()const;
 private:

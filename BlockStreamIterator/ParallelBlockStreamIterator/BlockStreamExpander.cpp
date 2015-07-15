@@ -274,7 +274,8 @@ bool BlockStreamExpander::createNewExpandedThread(){
 	para.pthis=this;
 	ticks start=curtick();
 	if(exclusive_expanding_.try_acquire()){
-		if (true == g_thread_pool_used){
+//		if (true == g_thread_pool_used){
+		if (true == false){
 			Environment::getInstance()->getThreadPool()->add_task(expanded_work, &para);
 		}
 		else {

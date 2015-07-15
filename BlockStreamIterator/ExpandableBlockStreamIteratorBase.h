@@ -68,6 +68,8 @@ public:
 
 
 protected:
+	/** Store the context belonging to the current thread to the free context list */
+	void StoreContext();
 
 	thread_context*	createOrReuseContext(context_reuse_mode crm);
 
@@ -146,7 +148,7 @@ private:
 	/* this list maintain the contexts that are currently in use. */
 	boost::unordered_map<pthread_t,thread_context*> context_list_;
 
-	std::vector<thread_context*> free_context_list_;
+	std::set<thread_context*> free_context_list_;
 
 	Lock context_lock_;
 

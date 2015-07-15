@@ -34,7 +34,7 @@
 #include "ExpandableBlockStreamExchangeLowerMaterialized.h"
 #include "../../Config.h"
 #include "../../utility/maths.h"
-#define BUFFER_SIZE_IN_EXCHANGE 1000
+#define BUFFER_SIZE_IN_EXCHANGE 10
 
 ExpandableBlockStreamExchangeEpoll::ExpandableBlockStreamExchangeEpoll(State state)
 :state(state){
@@ -71,11 +71,11 @@ bool ExpandableBlockStreamExchangeEpoll::open(const PartitionOffset& partition_o
 		}
 
 		socket_fd_lower_list=new int[nlowers];
-		//init -1 ---Yu
+
 		for (int i = 0; i < nlowers; ++i) {
 			socket_fd_lower_list[i] = -1;
 		}
-		buffer=new BlockStreamBuffer(state.block_size_,BUFFER_SIZE_IN_EXCHANGE,state.schema_);
+		buffer=new BlockStreamBuffer(state.block_size_,BUFFER_SIZE_IN_EXCHANGE*state.lower_id_list_.size(),state.schema_);
 		ExpanderTracker::getInstance()->addNewStageEndpoint(pthread_self(),LocalStageEndPoint(stage_src,"Exchange",buffer));
 		received_block_stream_=BlockStreamBase::createBlock(state.schema_,state.block_size_);
 

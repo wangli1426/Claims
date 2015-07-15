@@ -561,9 +561,11 @@ void* ExpanderTracker::MonitoringThread(void* arg) {
 	while(true){
 
 		for(boost::unordered_map<ExpanderID,ExpanderStatus*>::const_iterator it= pthis->expander_id_to_status_.begin();it!=pthis->expander_id_to_status_.cend();it++){
-			it->second->printPerformanceInfo();
+//			it->second->printPerformanceInfo();
 		}
-		usleep(print_cycles_in_us);
+		usleep(print_cycles_in_us*100);
+		printf("------>%d\n",pthis->expander_id_to_status_.size());
+
 	}
 }
 

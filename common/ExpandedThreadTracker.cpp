@@ -13,7 +13,7 @@
 #define CPU_CYCLES_IN_us (CPU_FRE/1000000L)
 #define TIME_SLICE  (1000*CPU_CYCLES_IN_us)
 #define get_time_slice_start(total_cycles) (total_cycles/TIME_SLICE*TIME_SLICE)
-#define NUMOFSLICES 10
+#define NUMOFSLICES 2
 
 #define MONITOR_FRECY (2000*CPU_CYCLES_IN_us)
 
@@ -77,9 +77,10 @@ void PerformanceInfo::processed_one_block(){
 		unsigned cur_dop=expand_shrink_->getDegreeOfParallelism();
 //		unsigned cur_dop=1;
 		last_update_=cur_tick;
-		scalability_vector_[cur_dop].last_update=cur_tick;
-		scalability_vector_[cur_dop].performance=report_instance_performance_in_millibytes();
-//		print();
+		if(cur_dop>0){
+			scalability_vector_[cur_dop].last_update=cur_tick;
+			scalability_vector_[cur_dop].performance=report_instance_performance_in_millibytes();
+		}
 	}
 
 }
@@ -112,12 +113,10 @@ double PerformanceInfo::report_instance_performance_in_millibytes(){
 
 
 ExpandedThreadTracker::ExpandedThreadTracker(ExpandabilityShrinkability* expand_shrink):perf_info_(expand_shrink) {
-	// TODO Auto-generated constructor stub
 
 }
 
 ExpandedThreadTracker::~ExpandedThreadTracker() {
-	// TODO Auto-generated destructor stub
 }
 
 void PerformanceInfo::initialize() {
@@ -174,6 +173,17 @@ bool PerformanceInfo::entry::isUpdateToDate()const {
 
 void PerformanceInfo::print() const {
 	int max_dop=Config::getInstance()->max_degree_of_parallelism+1;
+
+	std::string dop_graph;
+	int current_dop = expand_shrink_->getDegreeOfParallelism();
+	for(unsigned i=0;i<max_dop;i++){
+		if(i==current_dop)
+			dop_graph+='+';
+		else
+			dop_graph+='-';
+	}
+
+	printf("%s\t",dop_graph.c_str());
 	for(unsigned i=0;i<max_dop;i++){
 		if(scalability_vector_[i].isUpdateToDate())
 			printf("%4.0f\t",scalability_vector_[i].performance);

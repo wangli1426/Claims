@@ -126,7 +126,6 @@ bool BlockStreamJoinIterator::open(const PartitionOffset& partition_offset){
 	void *value_in_input;
 	void *value_in_hashtable;
 
-
 	join_thread_context* jtc=(join_thread_context*)createOrReuseContext(crm_numa_sensitive);
 
 	const Schema* input_schema=state_.input_schema_left->duplicateSchema();
@@ -252,6 +251,7 @@ bool BlockStreamJoinIterator::next(BlockStreamBase *block){
 		if(state_.child_right->next(jtc->r_block_for_asking_)==false){
 			if(block->Empty()==true){
 				free(joinedTuple);
+				StoreContext();
 				return false;
 			}
 			else{
@@ -270,7 +270,7 @@ bool BlockStreamJoinIterator::next(BlockStreamBase *block){
 }
 
 bool BlockStreamJoinIterator::close(){
-
+	printf("======CLOSED!!!!!\n\n");
 #ifdef TIME
 	stopTimer(&timer);
 	printf("time consuming: %lld, %f\n",timer,timer/(double)CPU_FRE);

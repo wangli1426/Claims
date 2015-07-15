@@ -23,15 +23,11 @@ PartitionedBlockBuffer::PartitionedBlockBuffer(unsigned nPartitions,unsigned blo
 	removed=0;
 }
 PartitionedBlockBuffer::PartitionedBlockBuffer(unsigned nPartitions,unsigned block_size)
-:nPartitions(nPartitions),nBlocks(nPartitions*3){
+:nPartitions(nPartitions),nBlocks(nPartitions*10){
 	blocks_in_partition_list=new std::list<Block*>[nPartitions];
 	for(unsigned i=0;i<nBlocks;i++){
 		Block* block=new Block(block_size);
-//		 block->~Block();
 		empty_block_list.push_back(block);
-//		void* abc=malloc(block_size);		//newmalloc
-//		free(abc);
-//		free(empty_block_list.back()->getBlock());
 	}
 	used_blocks.set_value(0);
 	empty_blocks.set_value(nBlocks);

@@ -69,8 +69,9 @@ void ExpandableBlockStreamIteratorBase::destoryAllContext(){
 	for(boost::unordered_map<pthread_t,thread_context*>::const_iterator it=context_list_.begin();it!=context_list_.cend();it++){
 		delete it->second;
 	}
-	for(int i=0;i<free_context_list_.size();i++){
-		delete free_context_list_[i];
+		context_list_.clear();
+	for(std::set<thread_context*>::iterator it=free_context_list_.begin();it!=free_context_list_.end();it++){
+		delete *it;
 	}
 }
 //void ExpandableBlockStreamIteratorBase::destorySelfContext(){
@@ -121,8 +122,10 @@ void ExpandableBlockStreamIteratorBase::setReturnStatus(bool ret) {
 thread_context* ExpandableBlockStreamIteratorBase::createOrReuseContext(
 		context_reuse_mode crm) {
 	thread_context* target=getFreeContext(crm);
-	if(target!=0)
+	if(target!=0){
+		initContext(target);
 		return target;
+	}
 	target= createContext();
 	target->set_locality_(getCurrentCpuAffility());
 	initContext(target);
@@ -136,23 +139,43 @@ bool ExpandableBlockStreamIteratorBase::getReturnStatus() const {
 thread_context* ExpandableBlockStreamIteratorBase::getFreeContext(
 		context_reuse_mode crm) {
 	int32_t locality=getCurrentCpuAffility();
-	for(int i=0;i<free_context_list_.size();i++){
+	thread_context* ret;
+	for(std::set<thread_context*>::iterator it=free_context_list_.begin();it!=free_context_list_.end();it++){
+//	for(int i=0;i<free_context_list_.size();i++){
 		switch(crm){
 		case crm_no_reuse:
 			return 0;
 		case crm_core_sensitive:
-			if(locality==free_context_list_[i]->get_locality_())
-				return free_context_list_[i];
+			if(locality==(*it)->get_locality_()){
+				ret=(*it);
+				free_context_list_.erase(it);
+				return ret;
+			}
 			break;
 		case crm_numa_sensitive:
-			if(getCurrentSocketAffility()==getSocketAffility(free_context_list_[i]->get_locality_()))
-				return free_context_list_[i];
+			if(getCurrentSocketAffility()==getSocketAffility((*it)->get_locality_())){
+				ret=(*it);
+				free_context_list_.erase(it);
+				return ret;
+			}
 			break;
 		case crm_anyway:
-			return free_context_list_[i];
+			ret=(*it);
+			free_context_list_.erase(it);
+			return ret;
 		default:
 			break;
 		}
 	}
 	return 0;
+}
+
+void ExpandableBlockStreamIteratorBase::StoreContext() {
+	context_lock_.acquire();
+	boost::unordered_map<pthread_t,thread_context*> ::const_iterator it=context_list_.find(pthread_self());
+	assert(it!=context_list_.cend());
+	thread_context* target = it->second;
+	context_list_.erase(it);
+	free_context_list_.insert(target);
+	context_lock_.release();
 }

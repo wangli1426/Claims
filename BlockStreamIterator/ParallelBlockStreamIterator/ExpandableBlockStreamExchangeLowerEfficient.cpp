@@ -61,7 +61,7 @@ bool ExpandableBlockStreamExchangeLowerEfficient::open(const PartitionOffset&){
 	 * to a merger. **/
 	sending_buffer_=new PartitionedBlockContainer(nuppers_,block_stream_for_asking_->getSerializedBlockSize());
 
-	/** Initialized the temporary block to hold the serialized block stream. **/
+	/** Initialized rthe temporary block to hold the serialized block stream. **/
 	block_for_serialization_=new Block(block_stream_for_asking_->getSerializedBlockSize());
 
 	/** Initialize the blocks that are used to accumulate the tuples from child so that the insertion to the buffer

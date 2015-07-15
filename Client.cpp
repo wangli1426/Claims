@@ -115,12 +115,12 @@ int main(int argc, char** argv){
 			continue;
 		}
 
-		submit_command(client,command);
+//		submit_command(client,command);
 
 		/*
 		 * the following command execute the query for a given time and p
 		 * rint the averaged query response time.*/
-//		submit_command_repeated(client,command,50);
+		submit_command_repeated(client,command,50);
 	}
 	client.shutdown();
 }

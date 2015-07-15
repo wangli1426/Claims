@@ -129,6 +129,7 @@ class BlockStreamFix:public BlockStreamBase {
 	friend class BlockStreamBase;
 	struct tail_info{
 		unsigned tuple_count;
+		double visit;
 	};
 public:
 	BlockStreamFix(unsigned block_size,unsigned tuple_size);

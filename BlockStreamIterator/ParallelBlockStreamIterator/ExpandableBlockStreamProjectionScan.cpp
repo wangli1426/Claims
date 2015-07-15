@@ -40,6 +40,7 @@ ExpandableBlockStreamProjectionScan::State::State(ProjectionID projection_id,Sch
 
 
 bool ExpandableBlockStreamProjectionScan::open(const PartitionOffset& partition_offset) {
+	createOrReuseContext(crm_numa_sensitive);
 	if(tryEntryIntoSerializedSection()){
 		/* this is the first expanded thread*/
 		PartitionStorage* partition_handle_;
@@ -132,6 +133,7 @@ bool ExpandableBlockStreamProjectionScan::next(BlockStreamBase* block) {
 
 	if(ExpanderTracker::getInstance()->isExpandedThreadCallBack(pthread_self())){
 		//		printf("<<<<<<<<<<<<<<<<<Scan detected call back signal!>>>>>>%lx>>>>>>>>>>>\n",pthread_self());
+		StoreContext();
 		return false;
 	}
 	perf_info->processed_one_block();
@@ -200,6 +202,10 @@ bool ExpandableBlockStreamProjectionScan::close() {
 
 void ExpandableBlockStreamProjectionScan::print() {
 	printf("Scan (ID=%d)\n",state_.projection_id_.table_id);
+}
+
+thread_context* ExpandableBlockStreamProjectionScan::createContext() {
+	return new scan_thread_context();
 }
 
 bool ExpandableBlockStreamProjectionScan::passSample() const {
