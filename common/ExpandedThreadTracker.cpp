@@ -191,5 +191,15 @@ void PerformanceInfo::print() const {
 			printf("N/A\t");
 		}
 	}
+
+	printf("     NPR%5.5f",getNormalizedProcessingRate());
 	printf("\n");
+}
+
+void PerformanceInfo::setVisit(double value) {
+	visit=value;
+}
+
+double PerformanceInfo::getNormalizedProcessingRate() const {
+	return report_instance_performance_in_millibytes()/(visit+0.00000001);
 }

@@ -10,6 +10,8 @@
 #include <string>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
+
+#include "../BlockStreamIterator/ExpandableBlockStreamIteratorBase.h"
 #ifdef DMALLOC
 #include "dmalloc.h"
 #endif

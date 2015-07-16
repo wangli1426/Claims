@@ -53,12 +53,24 @@ bool BlockStreamProjectIterator::next(BlockStreamBase *block){
 			tc->block_for_asking_->setEmpty();
 			if(state_.child_->next(tc->block_for_asking_)){
 //				printf("%lld\n",pthread_self());
+
 				delete tc->block_stream_iterator_;
 				tc->block_stream_iterator_=tc->block_for_asking_->createIterator();
+				updateRecentVisit(tc->block_for_asking_->getVisit());
+				tc->tuples_read_+=tc->block_for_asking_->getTuplesInBlock();
 			}
 			else
 			{
 				if (!block->Empty()) {
+					long tuple_consumed=tc->tuples_read_+(tc->block_stream_iterator_->get_cur()-tc->start_cur_);
+					int tuple_produced=block->getTuplesInBlock();
+					double instant_selectivity=(double)tuple_produced/tuple_consumed;
+					tc->tuples_read_=0;
+					tc->start_cur_=tc->block_stream_iterator_->get_cur();
+					updateSelectivity(instant_selectivity);
+					double selectivity=getSelectivity();
+					double new_visit=getRecentVisit()*selectivity;
+					block->setVisit(new_visit);
 					return true;
 				} else {
 					return false;
@@ -70,9 +82,19 @@ bool BlockStreamProjectIterator::next(BlockStreamBase *block){
 		 * (1) block is full of tuples satisfying filter (should return true to the caller)
 		 * (2) block_for_asking_ is exhausted (should fetch a new block from child and continue to process)
 		 */
-		if(block->Full())
+		if(block->Full()){
 			// for case (1)
+			long tuple_consumed=tc->tuples_read_+(tc->block_stream_iterator_->get_cur()-tc->start_cur_);
+			int tuple_produced=block->getTuplesInBlock();
+			double instant_selectivity=(double)tuple_produced/tuple_consumed;
+			tc->tuples_read_=0;
+			tc->start_cur_=tc->block_stream_iterator_->get_cur();
+			updateSelectivity(instant_selectivity);
+			double selectivity=getSelectivity();
+			double new_visit=getRecentVisit()*selectivity;
+			block->setVisit(new_visit);
 			return true;
+		}
 		else{
 		}
 	}
@@ -182,5 +204,7 @@ thread_context* BlockStreamProjectIterator::createContext() {
 		Expr_copy(state_.exprTree_[i],ptc->thread_qual_[i]);
 		InitExprAtPhysicalPlan(ptc->thread_qual_[i]);
 	}
+	ptc->start_cur_=0;
+	ptc->tuples_read_=0;
 	return ptc;
 }

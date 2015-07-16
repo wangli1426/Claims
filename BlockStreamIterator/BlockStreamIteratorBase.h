@@ -41,6 +41,18 @@ public:
 	 */
 	virtual ResultSet* getResultSet();
 
+	protected:
+
+	void updateRecentVisit(double value);
+	double getRecentVisit() const;
+
+	void updateSelectivity(double value);
+	double getSelectivity() const;
+
+	double recent_visit_;
+
+	double recent_selectivity_;
+
 private:
 	friend class boost::serialization::access;
 	template<class Archive>

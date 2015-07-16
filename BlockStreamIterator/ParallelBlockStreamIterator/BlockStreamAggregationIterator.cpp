@@ -108,6 +108,8 @@ bool BlockStreamAggregationIterator::open(const PartitionOffset& partition_offse
 
 	while(state_.child->next(bsb))	// traverse every block from child
 	{
+		if(random()%1000==0)
+			printf("visit %4.4f\n",bsb->getVisit());
 		BlockStreamBase::BlockStreamTraverseIterator *bsti=bsb->createIterator();
 		bsti->reset();
 		while((cur=bsti->currentTuple())!=0)	// traverse every tuple from block
@@ -426,6 +428,8 @@ bool BlockStreamAggregationIterator::next(BlockStreamBase *block){
 			else{
 				ht_cur_lock_.release();
 				perf_info_->processed_one_block();
+				perf_info_->setVisit(1);
+				block->setVisit(1);
 				return true;
 			}
 		}

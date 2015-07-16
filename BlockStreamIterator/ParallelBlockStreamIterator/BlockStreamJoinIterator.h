@@ -35,6 +35,8 @@ public:
 		BlockStreamBase* r_block_for_asking_;
 		BlockStreamBase::BlockStreamTraverseIterator* r_block_stream_iterator_;
 		BasicHashTable::Iterator hashtable_iterator_;
+		int start_cur_;
+		long long tuples_read_;
 	};
 
 	class State{

@@ -121,6 +121,8 @@ protected:
 	void setReturnStatus(bool ret);
 
 	bool getReturnStatus()const;
+
+
 private:
 	thread_context* getFreeContext(context_reuse_mode crm);
 protected:
@@ -151,6 +153,8 @@ private:
 	std::set<thread_context*> free_context_list_;
 
 	Lock context_lock_;
+
+
 
 
 private:

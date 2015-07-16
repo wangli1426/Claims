@@ -120,8 +120,11 @@ public:
 	 *  when initializing the BlockStream. -_-
 	 */
 	static BlockStreamBase* createBlockWithDesirableSerilaizedSize(Schema* schema,unsigned block_size);
+	virtual void setVisit(double visit)=0;
+	virtual double getVisit()const=0;
 protected:
 	virtual void* getTuple(unsigned offset) const =0;
+
 
 };
 
@@ -178,6 +181,8 @@ public:
 	 * which last four bytes indicate the number of tuples in the block.*/
 	void constructFromBlock(const Block& block);
 	BlockStreamBase* createBlockAndDeepCopy();
+	void setVisit(double visit);
+	double getVisit()const;
 protected:
 public:
 	unsigned tuple_size_;
@@ -255,6 +260,8 @@ public:
 	unsigned getBlockCapacityInTuples()const{assert(false);};
 	unsigned getTuplesInBlock()const{};
 	BlockStreamBase* createBlockAndDeepCopy();
+	void setVisit(double visit);
+	double getVisit()const;
 private:
 	const Schema *schema_;
 	unsigned attributes_;

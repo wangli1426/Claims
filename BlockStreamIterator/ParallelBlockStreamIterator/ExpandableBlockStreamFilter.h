@@ -36,6 +36,8 @@ public:
 		BlockStreamBase* temp_block_;
 		BlockStreamBase::BlockStreamTraverseIterator* block_stream_iterator_;
 		vector<QNode *>thread_qual_;
+		int start_cur_;
+		long long tuples_read_;
 		~filter_thread_context();
 	};
 	/* struct to hold the remaining data when the next is returned but the block from the child

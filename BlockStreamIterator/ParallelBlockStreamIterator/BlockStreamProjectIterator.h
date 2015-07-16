@@ -38,6 +38,8 @@ public:
 		BlockStreamBase* temp_block_;
 		BlockStreamBase::BlockStreamTraverseIterator* block_stream_iterator_;
 		vector<QNode *>thread_qual_;
+		int start_cur_;
+		long long tuples_read_;
 		~project_thread_context(){
 			delete block_for_asking_;
 			delete temp_block_;

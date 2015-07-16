@@ -104,6 +104,7 @@ thread_context* ExpandableBlockStreamIteratorBase::getContext(){
 	}
 	else
 	{
+//		assert(false);
 		ret=0;
 	}
 //	printf("Thread %lx is poped!\n",pthread_self());
@@ -121,7 +122,12 @@ void ExpandableBlockStreamIteratorBase::setReturnStatus(bool ret) {
 
 thread_context* ExpandableBlockStreamIteratorBase::createOrReuseContext(
 		context_reuse_mode crm) {
-	thread_context* target=getFreeContext(crm);
+	thread_context* target=getContext();
+	if(target!=0){
+		return target;
+	}
+
+	target=getFreeContext(crm);
 	if(target!=0){
 		initContext(target);
 		return target;
@@ -135,6 +141,8 @@ thread_context* ExpandableBlockStreamIteratorBase::createOrReuseContext(
 bool ExpandableBlockStreamIteratorBase::getReturnStatus() const {
 	return open_ret_;
 }
+
+
 
 thread_context* ExpandableBlockStreamIteratorBase::getFreeContext(
 		context_reuse_mode crm) {

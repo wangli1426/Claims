@@ -101,9 +101,14 @@ bool ExpandableBlockStreamExchangeLowerEfficient::open(const PartitionOffset&){
 bool ExpandableBlockStreamExchangeLowerEfficient::next(BlockStreamBase*){
 	void* tuple_from_child;
 	void* tuple_in_cur_block_stream;
+	std::vector<long> blocks_sent_to_receivers=std::vector<long>(state_.upper_id_list_.size());
+	unsigned long blocks_to_mergers=0;
 	while(true){
 		block_stream_for_asking_->setEmpty();
 		if(state_.child_->next(block_stream_for_asking_)){
+
+			updateRecentVisit(block_stream_for_asking_->getVisit());
+
 			/** if a blocks is obtained from child, we partition the tuples in the block. **/
 			if(state_.partition_schema_.isHashPartition()){
 				BlockStreamBase::BlockStreamTraverseIterator* traverse_iterator=block_stream_for_asking_->createIterator();
@@ -119,6 +124,9 @@ bool ExpandableBlockStreamExchangeLowerEfficient::next(BlockStreamBase*){
 					while(!(tuple_in_cur_block_stream=partitioned_block_stream_[partition_id]->allocateTuple(bytes))){
 						/** if the destination block is full, we insert the block into the buffer **/
 
+						blocks_sent_to_receivers[partition_id]++;
+						blocks_to_mergers++;
+						partitioned_block_stream_[partition_id]->setVisit(getRecentVisit()*(double)blocks_sent_to_receivers[partition_id]/blocks_to_mergers);
 						partitioned_block_stream_[partition_id]->serialize(*block_for_serialization_);
 						partitioned_data_buffer_->insertBlockToPartitionedList(block_for_serialization_,partition_id);
 						partitioned_block_stream_[partition_id]->setEmpty();

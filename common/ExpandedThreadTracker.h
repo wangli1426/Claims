@@ -52,6 +52,11 @@ struct PerformanceInfo{
 	ExpandabilityShrinkability* expand_shrink_;
 	/* the timestamp for the last update to the scalability vector */
 	timestamp last_update_;
+
+	void setVisit(double value);
+
+	double visit;
+	double getNormalizedProcessingRate()const;
 };
 
 

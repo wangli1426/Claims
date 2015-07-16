@@ -307,3 +307,22 @@ bool BlockStreamVar::serialize(Block & block) const{
 BlockStreamBase* BlockStreamVar::createBlockAndDeepCopy() {
 	return 0;
 }
+
+void BlockStreamFix::setVisit(double visit) {
+	tail_info* tail=(tail_info*)((char*)getBlock()+getsize()-sizeof(tail_info));
+	tail->visit=visit;
+}
+
+void BlockStreamVar::setVisit(double visit) {
+	assert(false);//not implemented for variable data block
+}
+
+double BlockStreamFix::getVisit() const {
+	tail_info* tail=(tail_info*)((char*)getBlock()+getsize()-sizeof(tail_info));
+	return tail->visit;
+}
+
+double BlockStreamVar::getVisit() const {
+	assert(false);
+	return 0;
+}

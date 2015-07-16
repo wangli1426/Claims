@@ -137,7 +137,10 @@ bool ExpandableBlockStreamProjectionScan::next(BlockStreamBase* block) {
 		return false;
 	}
 	perf_info->processed_one_block();
-	return partition_reader_iterator_->nextBlock(block);
+	perf_info->setVisit(1);
+	bool ret=partition_reader_iterator_->nextBlock(block);
+	block->setVisit(1);
+	return ret;
 
 #endif
 

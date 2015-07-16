@@ -128,6 +128,9 @@ bool BlockStreamJoinIterator::open(const PartitionOffset& partition_offset){
 
 	join_thread_context* jtc=(join_thread_context*)createOrReuseContext(crm_numa_sensitive);
 
+	printf("%llx creates context [%llx]\n",pthread_self(),jtc);
+
+
 	const Schema* input_schema=state_.input_schema_left->duplicateSchema();
 	const Operate* op=input_schema->getcolumn(state_.joinIndex_left[0]).operate->duplicateOperator();
 	const unsigned buckets=state_.ht_nbuckets;
@@ -182,6 +185,7 @@ bool BlockStreamJoinIterator::open(const PartitionOffset& partition_offset){
 	if(ExpanderTracker::getInstance()->isExpandedThreadCallBack(pthread_self())){
 		unregisterExpandedThreadToAllBarriers(1);
 //		printf("<<<<<<<<<<<<<<<<<Join open detected call back signal!>>>>>>>>>>>>>>>>>\n");
+		printf("%llx shrinks[%llx]\n",pthread_self());
 		return true;
 	}
 
@@ -210,7 +214,9 @@ bool BlockStreamJoinIterator::next(BlockStreamBase *block){
 	void *joinedTuple=memalign(cacheline_size,state_.output_schema->getTupleMaxSize());
 	bool key_exit;
 
-	join_thread_context* jtc=(join_thread_context*)getContext();
+	join_thread_context* jtc=(join_thread_context*)createOrReuseContext(crm_numa_sensitive);
+
+	printf("join thread : %llx\n", pthread_self());
 
 	while(true){
 			while((tuple_from_right_child=jtc->r_block_stream_iterator_->currentTuple())>0)
@@ -232,6 +238,15 @@ bool BlockStreamJoinIterator::next(BlockStreamBase *block){
 						}
 						else{
 							free(joinedTuple);
+							long tuple_consumed=jtc->tuples_read_+(jtc->r_block_stream_iterator_->get_cur()-jtc->start_cur_);
+							int tuple_produced=block->getTuplesInBlock();
+							double instant_selectivity=(double)tuple_produced/tuple_consumed;
+							jtc->tuples_read_=0;
+							jtc->start_cur_=jtc->r_block_stream_iterator_->get_cur();
+							updateSelectivity(instant_selectivity);
+							double selectivity=getSelectivity();
+							double new_visit=getRecentVisit()*selectivity;
+							block->setVisit(new_visit);
 							return true;
 						}
 					}
@@ -252,15 +267,27 @@ bool BlockStreamJoinIterator::next(BlockStreamBase *block){
 			if(block->Empty()==true){
 				free(joinedTuple);
 				StoreContext();
+				printf("%llx stores context [%llx]\n",pthread_self(),jtc);
 				return false;
 			}
 			else{
 				free(joinedTuple);
+				long tuple_consumed=jtc->tuples_read_+(jtc->r_block_stream_iterator_->get_cur()-jtc->start_cur_);
+				int tuple_produced=block->getTuplesInBlock();
+				double instant_selectivity=(double)tuple_produced/tuple_consumed;
+				jtc->tuples_read_=0;
+				jtc->start_cur_=jtc->r_block_stream_iterator_->get_cur();
+				updateSelectivity(instant_selectivity);
+				double selectivity=getSelectivity();
+				double new_visit=getRecentVisit()*selectivity;
+				block->setVisit(new_visit);
 				return true;
 			}
 		}
 		delete jtc->r_block_stream_iterator_;
 		jtc->r_block_stream_iterator_=jtc->r_block_for_asking_->createIterator();
+		updateRecentVisit(jtc->r_block_for_asking_->getVisit());
+		jtc->tuples_read_+=jtc->r_block_for_asking_->getTuplesInBlock();
 		if((tuple_from_right_child=jtc->r_block_stream_iterator_->currentTuple())){
 			unsigned bn=state_.input_schema_right->getcolumn(state_.joinIndex_right[0]).operate->getPartitionValue(state_.input_schema_right->getColumnAddess(state_.joinIndex_right[0],tuple_from_right_child),state_.ht_nbuckets);
 			hashtable->placeIterator(jtc->hashtable_iterator_,bn);
@@ -327,5 +354,7 @@ thread_context* BlockStreamJoinIterator::createContext() {
 	jtc->l_block_stream_iterator_=jtc->l_block_for_asking_->createIterator();
 	jtc->r_block_for_asking_=BlockStreamBase::createBlock(state_.input_schema_right,state_.block_size_);
 	jtc->r_block_stream_iterator_=jtc->r_block_for_asking_->createIterator();
+	jtc->start_cur_=0;
+	jtc->tuples_read_=0;
 	return jtc;
 }

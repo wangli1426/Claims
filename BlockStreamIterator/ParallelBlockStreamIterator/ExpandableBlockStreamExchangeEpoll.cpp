@@ -141,6 +141,7 @@ bool ExpandableBlockStreamExchangeEpoll::next(BlockStreamBase* block){
 		if(sem_new_block_or_eof_.timed_wait(1)){
 			if(buffer->getBlock(*block)){
 				perf_info_->processed_one_block();
+				perf_info_->setVisit(block->getVisit());
 				return true;
 			}
 		}
@@ -354,6 +355,8 @@ void ExpandableBlockStreamExchangeEpoll::CancelReceiverThread(){
 void* ExpandableBlockStreamExchangeEpoll::receiver(void* arg){
 	ExpandableBlockStreamExchangeEpoll* Pthis=(ExpandableBlockStreamExchangeEpoll*)arg;
 
+	std::vector<double> visits= std::vector<double>(Pthis->nlowers);
+
 	struct epoll_event event;
 	struct epoll_event *events;
 
@@ -476,6 +479,12 @@ void* ExpandableBlockStreamExchangeEpoll::receiver(void* arg){
 					/** In the current implementation, a empty block stream means End-Of-File**/
 					const bool eof=Pthis->received_block_stream_->Empty();
 					if(!eof){
+						visits[socket_fd_index]=visits[socket_fd_index]*0.6+Pthis->received_block_stream_->getVisit()*0.4;
+						double visit=0;
+						for(int i=0;i<visits.size();i++){
+							visit+=visits[i];
+						}
+						Pthis->received_block_stream_->setVisit(visit);
 						/** the newly obtained data block is validate, so we insert it into the buffer and post
 						 * sem_new_block_or_eof_ so that all the threads waiting for the semaphore continue. **/
 						Pthis->buffer->insertBlock(Pthis->received_block_stream_);
